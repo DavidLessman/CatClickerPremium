@@ -1,10 +1,6 @@
 // create global variables
-let scoreDisplay = document.getElementById("score");
-let scoreBoard = document.getElementById("scoreBoard");
-let Board = document.getElementById("PlayField");
-let catMenu = document.getElementById('catMenu');
 
-// catList (array) is definately part of the model
+// catList (array), currentCat and siteScore are part of the model, they store data.
 var model = {
     currentCat: null,
     siteScore: 0,
@@ -47,65 +43,114 @@ var model = {
     ]
 }
 
-function RenderCat(i) {
-    // next line is view? maybe Octopus
-    Board.innerHTML = '';
-
-    var para = document.createElement("div");
-    para.classList.add("cat");
-    para.innerHTML = `<h3>Name: <span id="name">${model.catList[i].name}</span>  Clicks: <span id ="clicks">${catList[i].score}</span > <h3><img class="catPic" id="catPic" src="${catList[i].img}">`;
-    Board.appendChild(para);
-    var clickCounter = document.getElementById('clicks');
-    var pictureOfThisCat = document.getElementById('catPic');
-
-    pictureOfThisCat.addEventListener('click', (function (evt) {
-        return function () {
-            console.log(`You clicked on ${modelcatList[i].name}`);
-            // next few lines are definately octopus, probably this entire function.
-            model.catList[i].score += 1;
-            model.siteScore = 0;
-            for (var s = 0; s < model.catList.length; s++) {
-                model.siteScore += model.catList[s].score;
-            };
-            // well, these next 3 have got to be octopus getting info from Model and passing to View
-            scoreDisplay.innerText = model.siteScore;
-            clickCounter.innerText = model.catList[i].score;
-            menuScoresArray[i].innerText = model.catList[i].score;
-        };
-    })(i));
-
-}
-
-function renderMenu(i) {
-    var para = document.createElement("li");
-    para.classList.add("menuItem");
-    para.innerHTML = `<span>${catList[i].name}</span>  Clicks: <span name ="menuClick">${catList[i].score}</span>`;
-    catMenu.appendChild(para);
-    
-    para.addEventListener('click', (function (evt) {
-        return function () {
-            console.log(`You clicked on ${catList[i].name}`);
-            RenderCat(i);
-        }        
-        //clickCounter.innerText = catList[i].score;
-    }) (i));
-}
-
-
-
 // Octopus
-for (var i = 0; i < catList.length; i++) {
-    renderMenu(i);
-}
-var menuScoresArray = document.getElementsByName('menuClick');
+var Octopus = {
+    init: function () {
+        model.currentCat = model.catList[0];
 
-RenderCat(4);
+        catMenuView.init();
+        catView.init();
+    },
+
+    getCats: function () {
+        return model.catList;
+    },
+
+    // current Cat get/set
+    getCurrentCat: function () {
+        return model.currentCat;
+    },
+
+    setCurrentCat: function (cat) {
+        model.currentCat = cat;
+    },
+
+    incrementCounter: function () {
+        model.currentCat.score++;
+        catView.render();
+        model.siteScore = 0;
+        for (var s = 0; s < model.catList.length; s++) {
+            model.siteScore += model.catList[s].score;
+        };
+        ScoreBoardView.render();
+    }
+}
+
+ //View seperated into 3 views: the cat itself, view for the menu, 
+ //and the scoreBoard(total score for all the cats).
+
+// cat view
+
+var catView = {
+
+    init: function () {
+        this.catName = document.getElementById('cat-name');
+        this.clickCounter = document.getElementById('cat-clicks');
+        this.pictureOfThisCat = document.getElementById("cat-Pic");
+
+        this.pictureOfThisCat.addEventListener('click', function () {
+            Octopus.incrementCounter();
+            console.log("click!");
+        });
+
+        this.render();
+    },
+
+    render: function () {
+        var fluffy = Octopus.getCurrentCat();
+        this.catName.innerText = fluffy.name;
+        this.clickCounter.innerText = fluffy.score;
+        this.pictureOfThisCat.src = fluffy.img;
+
+    }
+}
+
+// catMenu view
+
+var catMenuView = {
+    init: function () {
+        this.catMenuElement = document.getElementById('catMenu');
+
+        this.render();
+    },
+
+    render: function () {
+        var cat, elem, i;
+        var cats = Octopus.getCats();
+
+        for (i = 0; i < cats.length; i++) {
+            cat = cats[i];
+            var para = document.createElement("li");
+            para.classList.add("menuItem");
+            para.innerHTML = `<span>${cat.name}</span>`;
+
+
+            para.addEventListener('click', (function (evt) {
+                return function () {
+                    Octopus.setCurrentCat(evt);
+                    catView.render();
+                }
+
+            })(cat));
+
+            this.catMenuElement.appendChild(para);
+        }
+
+
+    },
+}
+
+var ScoreBoardView = {
+    scoreDisplay: document.getElementById("score"),
+
+    render: function () {
+        this.scoreDisplay.innerText = model.siteScore;
+    },
+}
+
 
 function resetGame() {
     siteScore = 0;
-    for (var i = 0; i < catList.length; i++) {
-        catList[i].score = 0;
-    };
 }
 
-resetGame();
+Octopus.init();
